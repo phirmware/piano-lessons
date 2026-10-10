@@ -62,13 +62,19 @@ export function renderSheet(container, { notes, index, results, wrongMidi, showN
     const slice = notes.slice(start, start + perSystem);
     const width = STAFF_LEFT + CLEF_W + perSystem * SLOT_W + 10;
     const right = width - 4;
-    let svg = `<svg class="system" viewBox="0 0 ${width} ${HEIGHT}" role="img" aria-label="Notes ${start + 1} to ${start + slice.length}">`;
+    // Grow the system for notes beyond C2–C7 (many ledger lines); within that
+    // range it keeps the standard 0..HEIGHT box.
+    const ys = slice.map((note) => yFor(staffStep(note), clefFor(note)));
+    const top = Math.min(0, Math.min(...ys) - 12);
+    const bottom = Math.max(HEIGHT, Math.max(...ys) + 46);
+    const labelY = LABEL_Y + (bottom - HEIGHT);
+    let svg = `<svg class="system" viewBox="0 ${top} ${width} ${bottom - top}" role="img" aria-label="Notes ${start + 1} to ${start + slice.length}">`;
 
     // Cursor behind the current note.
     slice.forEach((_, i) => {
       if (start + i !== index) return;
       const x = STAFF_LEFT + CLEF_W + SLOT_W * (i + 0.5);
-      svg += `<rect class="cursor${wrongMidi !== null ? ' is-wrong' : ''}" x="${x - SLOT_W / 2 + 5}" y="4" width="${SLOT_W - 10}" height="${HEIGHT - 8}" rx="10"/>`;
+      svg += `<rect class="cursor${wrongMidi !== null ? ' is-wrong' : ''}" x="${x - SLOT_W / 2 + 5}" y="${top + 4}" width="${SLOT_W - 10}" height="${bottom - top - 8}" rx="10"/>`;
     });
 
     svg += staffLines(TREBLE_BOTTOM_Y, STAFF_LEFT, right) + staffLines(BASS_BOTTOM_Y, STAFF_LEFT, right);
@@ -84,9 +90,9 @@ export function renderSheet(container, { notes, index, results, wrongMidi, showN
       const cls = n === index ? (wrongMidi !== null ? 'current wrong' : 'current') : r.done ? (r.mistakes ? 'done had-mistakes' : 'done') : 'upcoming';
       svg += noteGroup(note, x, cls);
       if (n === index && wrongMidi !== null) {
-        svg += `<text class="label label-wrong" x="${x}" y="${LABEL_Y}">✗ ${midiToName(wrongMidi)}</text>`;
+        svg += `<text class="label label-wrong" x="${x}" y="${labelY}">✗ ${midiToName(wrongMidi)}</text>`;
       } else if (showNames === 'always' || (showNames === 'after' && r.done)) {
-        svg += `<text class="label${r.done ? ' label-done' : ''}" x="${x}" y="${LABEL_Y}">${noteLabel(note)}</text>`;
+        svg += `<text class="label${r.done ? ' label-done' : ''}" x="${x}" y="${labelY}">${noteLabel(note)}</text>`;
       }
     });
 

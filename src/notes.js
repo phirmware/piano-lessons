@@ -5,8 +5,12 @@ export const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 const LETTER_SEMITONES = [0, 2, 4, 5, 7, 9, 11];
 const SHARP_NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
 
+// Default practice range (a 61-key keyboard)…
 export const LOWEST_MIDI = 36; // C2
 export const HIGHEST_MIDI = 96; // C7
+// …and the full 88-key piano.
+export const PIANO_LOWEST = 21; // A0
+export const PIANO_HIGHEST = 108; // C8
 export const MIDDLE_C = 60; // C4
 
 // Diatonic index of each staff's bottom line: E4 (treble) and G2 (bass).
@@ -57,13 +61,13 @@ export function ledgerSteps(step) {
   return steps;
 }
 
-// Natural notes in [LOWEST_MIDI, HIGHEST_MIDI], for range pickers.
+// Natural notes on the full piano (A0–C8), for range pickers.
 export function naturalNotesInRange() {
   const notes = [];
-  for (let octave = 2; octave <= 7; octave++) {
+  for (let octave = 0; octave <= 8; octave++) {
     for (let li = 0; li < 7; li++) {
       const n = makeNote(li, octave);
-      if (n.midi >= LOWEST_MIDI && n.midi <= HIGHEST_MIDI) notes.push(n);
+      if (n.midi >= PIANO_LOWEST && n.midi <= PIANO_HIGHEST) notes.push(n);
     }
   }
   return notes;
@@ -73,7 +77,7 @@ export function naturalNotesInRange() {
 // (no E♯, F♭, B♯, C♭), each black key appearing both as a sharp and a flat.
 export function notePool({ low = LOWEST_MIDI, high = HIGHEST_MIDI, clef = 'both', accidentals = false } = {}) {
   const pool = [];
-  for (let octave = 1; octave <= 8; octave++) {
+  for (let octave = 0; octave <= 8; octave++) {
     for (let li = 0; li < 7; li++) {
       for (const acc of accidentals ? [-1, 0, 1] : [0]) {
         if (acc === 1 && (li === 2 || li === 6)) continue;
@@ -86,6 +90,16 @@ export function notePool({ low = LOWEST_MIDI, high = HIGHEST_MIDI, clef = 'both'
     }
   }
   return pool;
+}
+
+// Keyboard range to display: the given notes plus the default C2–C7, widened
+// to white keys at both ends.
+export function keyboardRange(midis) {
+  let low = Math.min(LOWEST_MIDI, ...midis);
+  let high = Math.max(HIGHEST_MIDI, ...midis);
+  if (isBlackKey(low)) low--;
+  if (isBlackKey(high)) high++;
+  return { low, high };
 }
 
 // Random sequence from the pool, never repeating the same pitch back to back.
@@ -105,13 +119,13 @@ export function generateExercise(pool, count, rng = Math.random) {
 }
 
 // Parses a note name such as "C4", "f#3", "Bb2", "E♭5" or "G♯6".
-// Returns null if it isn't a note within C2–C7.
+// Returns null if it isn't a note on the piano (A0–C8).
 export function parseNoteName(text) {
   const m = /^([A-Ga-g])(#|♯|b|♭)?(\d)$/.exec(text.trim());
   if (!m) return null;
   const accidental = m[2] === '#' || m[2] === '♯' ? 1 : m[2] ? -1 : 0;
   const note = makeNote(LETTERS.indexOf(m[1].toUpperCase()), Number(m[3]), accidental);
-  return note.midi >= LOWEST_MIDI && note.midi <= HIGHEST_MIDI ? note : null;
+  return note.midi >= PIANO_LOWEST && note.midi <= PIANO_HIGHEST ? note : null;
 }
 
 // Parses a list of note names separated by spaces, commas, dashes or new lines.

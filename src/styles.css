@@ -267,7 +267,7 @@ button.danger { background: var(--bad); border-color: var(--bad); color: #fff; }
 }
 .library .field textarea { font-family: ui-monospace, Menlo, monospace; resize: vertical; }
 .keyboard.mini { height: 64px; margin-top: 0.5rem; }
-.keyboard.mini .key.white span { font-size: 8px; }
+.keyboard.mini .key.white span { font-size: 7px; }
 .editor-tools { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
 .editor-tools button { padding: 0.3rem 0.8rem; font-size: 0.9rem; }
 .editor-errors { color: var(--bad); font-size: 0.9rem; min-height: 1.4em; margin: 0.5rem 0; }

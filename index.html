@@ -13,7 +13,7 @@
   <header class="top">
     <div class="brand">
       <h1>Note Reader</h1>
-      <p>Single-note sight reading · C2–C7</p>
+      <p>Single-note sight reading · <span id="rangeLabel">C2–C7</span></p>
     </div>
     <div class="top-actions">
       <button id="mic" class="primary" title="Shortcut: L">Start listening</button>
@@ -118,7 +118,7 @@
       <label class="field">Notes <span id="customCount" class="help-text"></span>
         <textarea id="customNotes" rows="3" spellcheck="false" placeholder="C4 D4 E4 F#4 Bb3 …"></textarea>
       </label>
-      <p class="help-text">Type note names separated by spaces (C2–C7; use # or b for sharps and flats), or click keys below to add them.</p>
+      <p class="help-text">Type note names separated by spaces (A0–C8; use # or b for sharps and flats), or click keys below to add them.</p>
       <div id="customKeyboard" class="keyboard mini" aria-label="Add notes from keyboard"></div>
       <div class="editor-tools">
         <button id="undoCustom" type="button">Undo last</button>

@@ -1,5 +1,5 @@
 // Note inputs: microphone (pitch detection) and USB MIDI keyboards.
-import { analyzeFrame } from './analyzer.js';
+import { analyzeFrame, pitchRangeFor } from './analyzer.js';
 import { NoteSegmenter } from './segmenter.js';
 
 export class MicListener {
@@ -8,6 +8,7 @@ export class MicListener {
     this.onFrame = onFrame;
     this.gate = 0.008;
     this.mutedUntil = 0;
+    this.pitchRange = undefined;
     this.running = false;
   }
 
@@ -38,6 +39,11 @@ export class MicListener {
     if (this.segmenter) this.segmenter.gate = gate;
   }
 
+  // Keys the player might press (the on-screen keyboard's range).
+  setRange(lowMidi, highMidi) {
+    this.pitchRange = pitchRangeFor(lowMidi, highMidi);
+  }
+
   // Ignore the mic briefly, e.g. while the app itself plays a note.
   mute(ms) {
     this.mutedUntil = performance.now() + ms;
@@ -47,7 +53,7 @@ export class MicListener {
     if (!this.running) return;
     this.analyser.getFloatTimeDomainData(this.buf);
     const now = performance.now();
-    const frame = analyzeFrame(this.buf, this.ctx.sampleRate, this.gate);
+    const frame = analyzeFrame(this.buf, this.ctx.sampleRate, this.gate, this.pitchRange);
     this.onFrame?.(frame);
     if (now >= this.mutedUntil) {
       const midi = this.segmenter.process({ time: now, ...frame });

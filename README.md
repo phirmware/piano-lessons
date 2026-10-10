@@ -1,6 +1,6 @@
 # Note Reader
 
-Single-note sight-reading practice for piano, C2–C7. The app shows a worksheet of
+Single-note sight-reading practice for piano: C2–C7 by default, any range on the full 88-key piano (A0–C8). The app shows a worksheet of
 notes on the grand staff, highlights the one you're on, listens to your piano
 through the microphone and only moves on when you play the right key.
 
@@ -8,6 +8,8 @@ through the microphone and only moves on when you play the right key.
 
 ```sh
 npm start        # → http://localhost:5173
+npm test         # detection + note model tests
+npm run build    # tests, then the deployable site in dist/
 ```
 
 Use Chrome, Edge or Safari. The microphone only works on `localhost` (or https),
@@ -33,11 +35,24 @@ kept in your browser (localStorage) and listed there to **Practise**, **Edit** o
 
 Shortcuts: **L** start/stop listening · **H** hear the current note · **N** new exercise.
 
-Settings let you narrow the range, practise one staff at a time, add sharps/flats,
+Settings let you choose the range (anywhere from A0 to C8 — the on-screen keyboard
+widens beyond C2–C7 when needed), practise one staff at a time, add sharps/flats,
 show note names, show the right key after mistakes, and adjust mic sensitivity.
 
 If your keyboard has USB-MIDI, plug it in: the app uses it automatically (more
 reliable than the microphone). Clicking the on-screen keys also works as input.
+
+## Deploy (Vercel)
+
+`vercel.json` is set up: Vercel runs `npm run build` (tests, then copies the app
+into `dist/`) and serves `dist/` over https, which the microphone requires.
+
+- **From GitHub:** push this repo, then in Vercel choose *Add New → Project*, import
+  the repo and click *Deploy* (no settings to change). Every push redeploys.
+- **From the terminal:** `npx vercel` for a preview, `npx vercel --prod` for production.
+
+Saved exercises and settings live in each browser's localStorage, so they are
+per-device and per-domain (localhost and the Vercel URL don't share them).
 
 ## Tips for the microphone
 

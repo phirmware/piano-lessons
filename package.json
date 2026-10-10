@@ -6,6 +6,10 @@
   "description": "Learn to read piano notes: single-note exercises verified by listening through the microphone.",
   "scripts": {
     "start": "node server.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "build": "npm test && node scripts/build.js"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { NoteSegmenter } from '../src/segmenter.js';
-import { analyzeFrame } from '../src/analyzer.js';
+import { analyzeFrame, pitchRangeFor } from '../src/analyzer.js';
 import { pianoTone } from './helpers/synth.js';
 
 const SR = 48000;
@@ -22,12 +22,12 @@ function perform(events, total) {
   return out;
 }
 
-function listen(audio, gate = 0.008) {
+function listen(audio, gate = 0.008, pitchRange) {
   const seg = new NoteSegmenter({ gate });
   const heard = [];
   const hop = Math.floor(SR / 60);
   for (let end = 4096; end <= audio.length; end += hop) {
-    const frame = analyzeFrame(audio.subarray(end - 4096, end), SR, gate);
+    const frame = analyzeFrame(audio.subarray(end - 4096, end), SR, gate, pitchRange);
     const midi = seg.process({ time: (end / SR) * 1000, ...frame });
     if (midi !== null) heard.push(midi);
   }
@@ -63,4 +63,14 @@ test('a long sustained note is reported once', () => {
 
 test('background noise alone produces nothing', () => {
   assert.deepEqual(listen(perform([], 2)), []);
+});
+
+test('full piano range: hears A0 to C8 when the range is widened', () => {
+  const seq = [21, 108, 23, 28, 33, 100, 104, 60, 22, 107];
+  const audio = perform(seq.map((midi, i) => ({ midi, at: 0.2 + i * 0.9, duration: 0.8 })), 0.2 + seq.length * 0.9 + 0.3);
+  assert.deepEqual(listen(audio, 0.008, pitchRangeFor(21, 108)), seq);
+});
+
+test('default range search is unchanged by pitchRangeFor(C2, C7)', () => {
+  assert.deepEqual(pitchRangeFor(36, 96), { minFreq: 55, maxFreq: 2400 });
 });

@@ -1,4 +1,4 @@
-import { notePool, generateExercise, naturalNotesInRange, noteLabel, midiToName, midiToFreq, LOWEST_MIDI, HIGHEST_MIDI } from './notes.js';
+import { notePool, generateExercise, naturalNotesInRange, noteLabel, midiToName, midiToFreq, keyboardRange, LOWEST_MIDI, HIGHEST_MIDI } from './notes.js';
 import { renderSheet } from './staff.js';
 import { buildKeyboard } from './keyboard.js';
 import { MicListener, connectMidi, playTone } from './inputs.js';
@@ -30,6 +30,7 @@ let settings = loadSettings();
 let state;
 let mic = null;
 let midiNames = [];
+let kbRange = keyboardRange([]);
 
 const keyboard = buildKeyboard($('keyboard'), (midi) => {
   playTone(midiToFreq(midi));
@@ -39,7 +40,14 @@ const keyboard = buildKeyboard($('keyboard'), (midi) => {
 
 function loadSettings() {
   try {
-    return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') };
+    const saved = { ...DEFAULTS, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') };
+    // Fall back to the default range if the saved one isn't valid.
+    const naturals = naturalNotesInRange().map((n) => n.midi);
+    if (!naturals.includes(saved.low) || !naturals.includes(saved.high) || saved.low > saved.high) {
+      saved.low = DEFAULTS.low;
+      saved.high = DEFAULTS.high;
+    }
+    return saved;
   } catch {
     return { ...DEFAULTS };
   }
@@ -58,6 +66,11 @@ const gateFor = (sensitivity) => 0.04 * Math.pow(0.0015 / 0.04, sensitivity / 10
 function startExercise(notes, customName = null) {
   els.modeChip.hidden = !customName;
   els.modeName.textContent = customName ? `Custom: ${customName}` : '';
+  // Show (and listen for) every key the exercise can use, never less than C2–C7.
+  kbRange = keyboardRange(customName ? notes.map((n) => n.midi) : [settings.low, settings.high]);
+  keyboard.setRange(kbRange.low, kbRange.high);
+  mic?.setRange(kbRange.low, kbRange.high);
+  $('rangeLabel').textContent = `${midiToName(settings.low)}–${midiToName(settings.high)}`;
   state = {
     notes,
     customName,
@@ -176,6 +189,7 @@ async function toggleMic() {
   }
   const listener = new MicListener({ onNote: handleNote, onFrame });
   listener.setGate(gateFor(settings.sensitivity));
+  listener.setRange(kbRange.low, kbRange.high);
   try {
     await listener.start();
   } catch (err) {

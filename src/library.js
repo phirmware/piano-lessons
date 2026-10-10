@@ -1,6 +1,6 @@
 // "My exercises": create, save (localStorage), list and practise custom note
 // sequences, e.g. copied from an external worksheet.
-import { parseNoteList, noteLabel, midiToName } from './notes.js';
+import { parseNoteList, noteLabel, midiToName, PIANO_LOWEST, PIANO_HIGHEST } from './notes.js';
 import { renderSheet } from './staff.js';
 import { buildKeyboard } from './keyboard.js';
 
@@ -50,7 +50,7 @@ export function initLibrary({ start, preview }) {
     const sep = notesInput.value && !/\s$/.test(notesInput.value) ? ' ' : '';
     notesInput.value += sep + midiToName(midi).replace('♯', '#');
     updatePreview();
-  });
+  }, { low: PIANO_LOWEST, high: PIANO_HIGHEST });
 
   function open() {
     $('settings').hidden = true;
@@ -104,7 +104,7 @@ export function initLibrary({ start, preview }) {
     const { notes, invalid } = parseNoteList(notesInput.value);
     count.textContent = `${notes.length} note${notes.length === 1 ? '' : 's'}`;
     errors.textContent = invalid.length
-      ? `Not recognised (use C2–C7, e.g. C4, F#3, Bb2): ${invalid.join(', ')}`
+      ? `Not recognised (use A0–C8, e.g. C4, F#3, Bb2): ${invalid.join(', ')}`
       : '';
     if (!notes.length) {
       previewEl.innerHTML = '<p class="help-text">The notes will appear here as you add them.</p>';
