@@ -13,7 +13,7 @@
   <header class="top">
     <div class="brand">
       <h1>Note Reader</h1>
-      <p>Single-note sight reading · <span id="rangeLabel">C2–C7</span></p>
+      <p><span id="modeLabel">Single-note</span> sight reading · <span id="rangeLabel">C2–C7</span></p>
     </div>
     <div class="top-actions">
       <button id="mic" class="primary" title="Shortcut: L">Start listening</button>
@@ -66,6 +66,12 @@
           </select>
         </label>
         <label class="check"><input type="checkbox" name="accidentals"> Include sharps &amp; flats</label>
+        <label>Notes at once
+          <select name="notesAtOnce">
+            <option value="1">Single notes</option>
+            <option value="2">Double notes (two together)</option>
+          </select>
+        </label>
         <label>Notes per exercise
           <select name="count">
             <option>8</option><option>16</option><option>24</option><option>32</option>
@@ -116,11 +122,12 @@
         <input id="customName" type="text" maxlength="80" placeholder="e.g. Book 1, page 12" autocomplete="off">
       </label>
       <label class="field">Notes <span id="customCount" class="help-text"></span>
-        <textarea id="customNotes" rows="3" spellcheck="false" placeholder="C4 D4 E4 F#4 Bb3 …"></textarea>
+        <textarea id="customNotes" rows="3" spellcheck="false" placeholder="C4 D4 E4+G4 F#4 Bb3 …"></textarea>
       </label>
-      <p class="help-text">Type note names separated by spaces (A0–C8; use # or b for sharps and flats), or click keys below to add them.</p>
+      <p class="help-text">Type note names separated by spaces (A0–C8; use # or b for sharps and flats), or click keys below to add them. Join notes played together with + (e.g. C4+E4), or press “+ Together” between keys.</p>
       <div id="customKeyboard" class="keyboard mini" aria-label="Add notes from keyboard"></div>
       <div class="editor-tools">
+        <button id="chordCustom" type="button" title="The next key is played together with the previous note">+ Together</button>
         <button id="undoCustom" type="button">Undo last</button>
         <button id="clearCustom" type="button">Clear</button>
       </div>

@@ -60,3 +60,35 @@ export class NoteSegmenter {
     return midi;
   }
 }
+
+// For chords: reports the onset (so the caller can snapshot what was already
+// ringing) and, ANALYZE_DELAY_MS later, when to judge the spectrum. The delay
+// lets a second key pressed slightly late join the same attempt.
+const ANALYZE_DELAY_MS = 260;
+
+export class ChordSegmenter {
+  constructor({ gate = 0.008 } = {}) {
+    this.gate = gate;
+    this.history = [];
+    this.lastOnset = -Infinity;
+    this.analyzeAt = null;
+  }
+
+  /** @returns {'onset'|'analyze'|null} */
+  process({ time, level }) {
+    const recent = this.history.filter((h) => time - h.time <= ONSET_LOOKBACK_MS);
+    const floor = recent.length ? Math.min(...recent.map((h) => h.level)) : 0;
+    this.history = [...recent, { time, level }];
+
+    if (level >= this.gate && level >= floor * ONSET_RATIO && time - this.lastOnset >= MIN_ONSET_GAP_MS) {
+      this.lastOnset = time;
+      this.analyzeAt = time + ANALYZE_DELAY_MS;
+      return 'onset';
+    }
+    if (this.analyzeAt !== null && time >= this.analyzeAt) {
+      this.analyzeAt = null;
+      return 'analyze';
+    }
+    return null;
+  }
+}

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseNoteName, parseNoteList, noteLabel, notePool, naturalNotesInRange, keyboardRange } from '../src/notes.js';
+import { parseNoteName, parseNoteList, noteLabel, notePool, naturalNotesInRange, keyboardRange, generateChordExercise, stepLabel, stepMidis } from '../src/notes.js';
 
 test('parses note names in common spellings', () => {
   const cases = { A0: 21, C8: 108, 'Bb0': 22, B1: 35, C4: 60, c4: 60, 'F#3': 54, 'f♯3': 54, Bb2: 46, 'B♭2': 46, b3: 59, C2: 36, C7: 96, 'E#4': 65 };
@@ -49,4 +49,28 @@ test('keyboard range keeps C2–C7 and widens to white keys', () => {
 test('exact keyboard range shows only the practised notes', () => {
   assert.deepEqual(keyboardRange([60, 79], { exact: true }), { low: 60, high: 79 });
   assert.deepEqual(keyboardRange([61, 70, 66], { exact: true }), { low: 60, high: 71 });
+});
+
+test('parses notes joined with + as one chord step, lowest first', () => {
+  const { notes, invalid } = parseNoteList('C4 E4+C4  G3 + B3 + D4, F4+F4 C4+zz');
+  assert.deepEqual(notes.map(stepLabel), ['C4', 'C4+E4', 'G3+B3+D4', 'F4']);
+  assert.deepEqual(invalid, ['C4+zz']);
+});
+
+test('double-note exercises: pairs a 3rd to a 7th apart, from the pool', () => {
+  const pool = notePool({ low: 60, high: 79 });
+  let seed = 1;
+  const rng = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const steps = generateChordExercise(pool, 200, rng);
+  assert.equal(steps.length, 200);
+  for (const step of steps) {
+    const [a, b] = stepMidis(step);
+    assert.ok(b - a >= 3 && b - a <= 11, stepLabel(step));
+    assert.ok(a >= 60 && b <= 79, stepLabel(step));
+  }
+  for (let i = 1; i < steps.length; i++) assert.notEqual(stepLabel(steps[i]), stepLabel(steps[i - 1]));
+});
+
+test('double notes need room: a tiny range gives no exercise', () => {
+  assert.deepEqual(generateChordExercise(notePool({ low: 60, high: 62 }), 4), []);
 });

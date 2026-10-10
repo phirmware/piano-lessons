@@ -79,10 +79,11 @@ export function buildKeyboard(container, onPress, { low = LOWEST_MIDI, high = HI
       clearTimeout(flashTimers.get(el));
       flashTimers.set(el, setTimeout(() => el.classList.remove(cls), ms));
     },
-    // Persistent marker (e.g. hint for the target); pass null to clear.
+    // Persistent marker on one key or a list of keys (e.g. the hint for the
+    // target); pass null to clear.
     mark(midi, cls) {
       container.querySelectorAll(`.${cls}`).forEach((el) => el.classList.remove(cls));
-      if (midi !== null) keyEl(midi)?.classList.add(cls);
+      for (const m of [].concat(midi ?? [])) keyEl(m)?.classList.add(cls);
     },
     // Scroll a key to the middle when the keys don't all fit (phones).
     reveal(midi, smooth = true) {

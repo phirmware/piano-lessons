@@ -22,6 +22,11 @@ export function makeNote(letterIndex, octave, accidental = 0) {
   return { letterIndex, octave, accidental, midi, diatonic: octave * 7 + letterIndex };
 }
 
+// An exercise step is a single note, or an array of notes played together.
+export const stepNotes = (step) => (Array.isArray(step) ? step : [step]);
+export const stepMidis = (step) => stepNotes(step).map((n) => n.midi);
+export const stepLabel = (step) => stepNotes(step).map(noteLabel).join('+');
+
 export function noteLabel(note) {
   const acc = note.accidental === 1 ? '♯' : note.accidental === -1 ? '♭' : '';
   return `${LETTERS[note.letterIndex]}${acc}${note.octave}`;
@@ -102,6 +107,31 @@ export function keyboardRange(midis, { exact = false } = {}) {
   return { low, high };
 }
 
+// Random pairs of notes to play together: a 3rd to a 7th apart on the staff
+// (3–11 semitones). Seconds and octaves are left out: octaves can't be told
+// apart by listening, and seconds are rare in beginner material.
+export function generateChordExercise(pool, count, rng = Math.random) {
+  const pairs = [];
+  for (const a of pool) {
+    for (const b of pool) {
+      const steps = b.diatonic - a.diatonic, semis = b.midi - a.midi;
+      if (steps >= 2 && steps <= 6 && semis >= 3 && semis <= 11) pairs.push([a, b]);
+    }
+  }
+  if (!pairs.length) return [];
+  const steps = [];
+  for (let i = 0; i < count; i++) {
+    let pair;
+    let tries = 0;
+    do {
+      pair = pairs[Math.floor(rng() * pairs.length)];
+      tries++;
+    } while (pairs.length > 1 && steps.length && stepLabel(pair) === stepLabel(steps[steps.length - 1]) && tries < 50);
+    steps.push(pair);
+  }
+  return steps;
+}
+
 // Random sequence from the pool, never repeating the same pitch back to back.
 export function generateExercise(pool, count, rng = Math.random) {
   if (pool.length === 0) return [];
@@ -129,13 +159,21 @@ export function parseNoteName(text) {
 }
 
 // Parses a list of note names separated by spaces, commas, dashes or new lines.
+// Notes joined with "+" (e.g. "C4+E4") are played together and become one
+// step: an array of notes, lowest first.
 export function parseNoteList(text) {
   const notes = [];
   const invalid = [];
-  for (const token of text.split(/[\s,;|\-]+/).filter(Boolean)) {
-    const note = parseNoteName(token);
-    if (note) notes.push(note);
-    else invalid.push(token);
+  for (const token of text.replace(/\s*\+\s*/g, '+').split(/[\s,;|\-]+/).filter(Boolean)) {
+    const parts = token.split('+').map(parseNoteName);
+    if (parts.some((n) => !n)) {
+      invalid.push(token);
+      continue;
+    }
+    const chord = parts
+      .filter((n, i) => parts.findIndex((o) => o.midi === n.midi) === i)
+      .sort((a, b) => a.midi - b.midi);
+    notes.push(chord.length > 1 ? chord : chord[0]);
   }
   return { notes, invalid };
 }

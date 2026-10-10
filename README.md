@@ -24,11 +24,26 @@ No dependencies — needs Node 18+ only.
    highlighted. Wrong → it shows what it heard and waits for you to try again.
 3. Notes you got wrong at least once turn amber; the summary at the end lists them.
 
+### Double notes
+
+Settings → **Notes at once → Double notes** shows two notes stacked in one column
+(a 3rd to a 7th apart) to play together. The app checks that both notes sound and
+nothing else new does. If it only hears one right note it waits for the other,
+and keys pressed up to ~1.5 s apart still count. On the on-screen keyboard, tap
+both keys (tap a key again to deselect it); with MIDI, hold both down.
+
+Limits of listening for two notes at once: octaves aren't used (the upper note
+is indistinguishable from the lower note's overtones), and a wrong note exactly
+an octave above a right one reads as "only one note heard" rather than "wrong".
+It never accepts a wrong chord in the test suite, but real pianos and rooms vary,
+so tell us if it misjudges you.
+
 ### My exercises (custom notes)
 
 To follow an external worksheet, book or song, open **My exercises** → **+ New exercise**,
 give it a name and enter the notes in order, either typed (`C4 E4 G4 Bb3 F#2`) or by
-clicking the small keyboard. A staff preview updates as you go. Saved exercises are
+clicking the small keyboard. Join notes played together with `+` (`C4+E4`), or
+press **+ Together** between key clicks. A staff preview updates as you go. Saved exercises are
 kept in your browser (localStorage) and listed there to **Practise**, **Edit** or
 **Delete**. While practising one, a “Custom: …” chip shows its name; click ✕ (or
 **New exercise**) to go back to random notes.
@@ -65,11 +80,13 @@ per-device and per-domain (localhost and the Vercel URL don't share them).
 
 - `src/pitch.js` — YIN pitch detection
 - `src/segmenter.js` — turns audio frames into "key pressed" events (onset detection + voting)
+- `src/chord.js`, `src/fft.js` — double notes: spectrum analysis to verify notes played together
 - `src/notes.js` — note model, staff positions, exercise generation
 - `src/staff.js` — grand-staff SVG rendering (Bravura music font, `fonts/`, SIL OFL)
 - `src/inputs.js` — microphone, MIDI and tone playback
 - `src/library.js` — saved custom exercises (My exercises panel)
 - `src/app.js` — exercise flow and UI
 
-`npm test` checks detection on synthesized piano tones for all 61 keys and
-common playing patterns (legato, repeated keys, soft notes, sustain, silence).
+`npm test` checks detection on synthesized piano tones for all 88 keys and
+common playing patterns (legato, repeated keys, soft notes, sustain, silence),
+and double notes (right, wrong, uneven, staggered, previous chord ringing).

@@ -1,6 +1,6 @@
 // "My exercises": create, save (localStorage), list and practise custom note
 // sequences, e.g. copied from an external worksheet.
-import { parseNoteList, noteLabel, midiToName, PIANO_LOWEST, PIANO_HIGHEST } from './notes.js';
+import { parseNoteList, stepLabel, midiToName, PIANO_LOWEST, PIANO_HIGHEST } from './notes.js';
 import { renderSheet } from './staff.js';
 import { buildKeyboard } from './keyboard.js';
 
@@ -47,7 +47,8 @@ export function initLibrary({ start, preview }) {
 
   const miniKeyboard = buildKeyboard($('customKeyboard'), (midi) => {
     preview(midi);
-    const sep = notesInput.value && !/\s$/.test(notesInput.value) ? ' ' : '';
+    // After "+", the key joins the previous note as a chord.
+    const sep = notesInput.value && !/[\s+]$/.test(notesInput.value) ? ' ' : '';
     notesInput.value += sep + midiToName(midi).replace('♯', '#');
     updatePreview();
   }, { low: PIANO_LOWEST, high: PIANO_HIGHEST });
@@ -74,7 +75,7 @@ export function initLibrary({ start, preview }) {
     }
     items.innerHTML = exercises.map((ex) => {
       const notes = parseNoteList(ex.notes.join(' ')).notes;
-      const sample = notes.slice(0, 8).map(noteLabel).join(' ') + (notes.length > 8 ? ' …' : '');
+      const sample = notes.slice(0, 8).map(stepLabel).join(' ') + (notes.length > 8 ? ' …' : '');
       return `<li class="lib-item" data-id="${ex.id}">
         <div class="lib-info">
           <strong>${escapeHtml(ex.name)}</strong>
@@ -138,7 +139,7 @@ export function initLibrary({ start, preview }) {
     const ex = {
       id: editingId ?? (crypto.randomUUID?.() ?? String(Date.now())),
       name,
-      notes: notes.map(noteLabel),
+      notes: notes.map(stepLabel),
       updatedAt: new Date().toISOString(),
     };
     const next = editingId ? exercises.map((e) => (e.id === editingId ? ex : e)) : [ex, ...exercises];
@@ -191,8 +192,13 @@ export function initLibrary({ start, preview }) {
   $('newCustom').addEventListener('click', () => showEditor());
   $('cancelCustom').addEventListener('click', showList);
   $('undoCustom').addEventListener('click', () => {
-    notesInput.value = notesInput.value.trimEnd().replace(/\S+$/, '').trimEnd();
+    // Removes the last note, including one joined to a chord with "+".
+    notesInput.value = notesInput.value.trimEnd().replace(/\+?[^\s+]*$/, '').trimEnd();
     updatePreview();
+  });
+  $('chordCustom').addEventListener('click', () => {
+    if (/\S$/.test(notesInput.value) && !notesInput.value.endsWith('+')) notesInput.value += '+';
+    notesInput.focus();
   });
   $('clearCustom').addEventListener('click', () => {
     notesInput.value = '';

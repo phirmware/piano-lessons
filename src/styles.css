@@ -132,6 +132,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 16px 2rem; }
 .label { font-size: 15px; font-weight: 600; text-anchor: middle; fill: var(--muted); }
 .label-done { fill: var(--good); }
 .label-wrong { fill: var(--bad); }
+.label-small { font-size: 12px; }
 
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
@@ -197,6 +198,9 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 16px 2rem; }
 .key.hint { box-shadow: inset 0 0 0 3px var(--accent); }
 .key.white.hint { background: color-mix(in srgb, var(--accent) 22%, var(--key-white)); }
 .key.black.hint { background: var(--accent); }
+/* Keys tapped so far towards a double note. */
+.key.white.pending { background: color-mix(in srgb, var(--accent) 45%, var(--key-white)); }
+.key.black.pending { background: color-mix(in srgb, var(--accent) 70%, var(--key-black)); }
 
 .settings {
   position: fixed;
