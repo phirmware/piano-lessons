@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Note Reader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <h1>Note Reader</h1>
+      <p>Single-note sight reading · C2–C7</p>
+    </div>
+    <div class="top-actions">
+      <button id="mic" class="primary" title="Shortcut: L">Start listening</button>
+      <button id="libraryBtn" aria-expanded="false" aria-controls="library">My exercises</button>
+      <button id="settingsBtn" aria-expanded="false" aria-controls="settings">Settings</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="status">
+      <p id="feedback" class="feedback" aria-live="polite"></p>
+      <div class="meta">
+        <span id="modeChip" class="mode-chip" hidden><span id="modeName"></span><button id="exitCustom" aria-label="Back to random notes" title="Back to random notes">✕</button></span>
+        <span id="progress"></span>
+        <span id="mistakes"></span>
+        <button id="hear" title="Shortcut: H">Hear note</button>
+        <button id="newEx" title="Shortcut: N">New exercise</button>
+      </div>
+    </section>
+
+    <section id="sheet" class="sheet" aria-label="Exercise"></section>
+
+    <section class="listen">
+      <div class="heard">Hearing <strong id="heard">—</strong></div>
+      <div class="meter" title="Input level. Notes must reach the marker to count.">
+        <div id="meterFill" class="meter-fill"></div>
+        <div id="meterGate" class="meter-gate"></div>
+      </div>
+      <span id="inputStatus" class="input-status"></span>
+    </section>
+
+    <section id="keyboard" class="keyboard" aria-label="Piano keyboard C2 to C7"></section>
+  </main>
+
+  <aside id="settings" class="settings" hidden>
+    <div class="settings-head">
+      <h2>Settings</h2>
+      <button id="closeSettings" aria-label="Close settings">✕</button>
+    </div>
+    <form id="settingsForm">
+      <fieldset>
+        <legend>Notes</legend>
+        <label>Lowest note <select name="low"></select></label>
+        <label>Highest note <select name="high"></select></label>
+        <label>Staff
+          <select name="clef">
+            <option value="both">Both (grand staff)</option>
+            <option value="treble">Treble only</option>
+            <option value="bass">Bass only</option>
+          </select>
+        </label>
+        <label class="check"><input type="checkbox" name="accidentals"> Include sharps &amp; flats</label>
+        <label>Notes per exercise
+          <select name="count">
+            <option>8</option><option>16</option><option>24</option><option>32</option>
+          </select>
+        </label>
+      </fieldset>
+      <fieldset>
+        <legend>Help</legend>
+        <label>Show note names
+          <select name="showNames">
+            <option value="never">Never</option>
+            <option value="after">After I play them</option>
+            <option value="always">Always</option>
+          </select>
+        </label>
+        <label>Show the right key after
+          <select name="hintAfter">
+            <option value="0">Never</option>
+            <option value="1">1 mistake</option>
+            <option value="2">2 mistakes</option>
+            <option value="3">3 mistakes</option>
+          </select>
+        </label>
+      </fieldset>
+      <fieldset>
+        <legend>Microphone</legend>
+        <label>Sensitivity <input type="range" name="sensitivity" min="0" max="100"></label>
+        <p class="help-text">Raise it if soft notes are ignored; lower it if room noise counts as notes. The marker on the level bar shows the threshold.</p>
+      </fieldset>
+    </form>
+  </aside>
+
+  <aside id="library" class="settings library" hidden>
+    <div class="settings-head">
+      <h2>My exercises</h2>
+      <button id="closeLibrary" aria-label="Close my exercises">✕</button>
+    </div>
+
+    <div id="libraryList">
+      <p class="help-text">Save notes from a worksheet, book or song and practise them in order.</p>
+      <button id="newCustom" class="primary lib-new">+ New exercise</button>
+      <ul id="libraryItems" class="lib-items"></ul>
+    </div>
+
+    <div id="libraryEditor" hidden>
+      <h3 id="editorTitle" class="editor-title">New exercise</h3>
+      <label class="field">Name
+        <input id="customName" type="text" maxlength="80" placeholder="e.g. Book 1, page 12" autocomplete="off">
+      </label>
+      <label class="field">Notes <span id="customCount" class="help-text"></span>
+        <textarea id="customNotes" rows="3" spellcheck="false" placeholder="C4 D4 E4 F#4 Bb3 …"></textarea>
+      </label>
+      <p class="help-text">Type note names separated by spaces (C2–C7; use # or b for sharps and flats), or click keys below to add them.</p>
+      <div id="customKeyboard" class="keyboard mini" aria-label="Add notes from keyboard"></div>
+      <div class="editor-tools">
+        <button id="undoCustom" type="button">Undo last</button>
+        <button id="clearCustom" type="button">Clear</button>
+      </div>
+      <p id="customErrors" class="editor-errors" aria-live="polite"></p>
+      <div id="customPreview" class="sheet preview" aria-label="Preview"></div>
+      <div class="dialog-actions">
+        <button id="cancelCustom" type="button">Cancel</button>
+        <button id="saveCustom" type="button">Save</button>
+        <button id="savePlayCustom" type="button" class="primary">Save &amp; practise</button>
+      </div>
+    </div>
+  </aside>
+
+  <dialog id="done">
+    <h2>Exercise complete</h2>
+    <div id="summary"></div>
+    <div class="dialog-actions">
+      <button id="retry">Retry these notes</button>
+      <button id="again" class="primary">New exercise</button>
+    </div>
+  </dialog>
+
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>
