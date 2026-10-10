@@ -31,6 +31,9 @@ let state;
 let mic = null;
 let midiNames = [];
 let kbRange = keyboardRange([]);
+let practiceSpan = [LOWEST_MIDI, HIGHEST_MIDI];
+// Phones show only the keys being practised; desktop always shows C2–C7 or more.
+const phoneQuery = matchMedia('(max-width: 700px), (pointer: coarse) and (max-height: 500px)');
 
 const keyboard = buildKeyboard($('keyboard'), (midi) => {
   playTone(midiToFreq(midi));
@@ -67,9 +70,10 @@ function startExercise(notes, customName = null) {
   els.modeChip.hidden = !customName;
   els.modeName.textContent = customName ? `Custom: ${customName}` : '';
   // Show (and listen for) every key the exercise can use, never less than C2–C7.
-  kbRange = keyboardRange(customName ? notes.map((n) => n.midi) : [settings.low, settings.high]);
-  keyboard.setRange(kbRange.low, kbRange.high);
-  mic?.setRange(kbRange.low, kbRange.high);
+  practiceSpan = customName ? notes.map((n) => n.midi) : [settings.low, settings.high];
+  kbRange = keyboardRange(practiceSpan);
+  showKeyboard();
+  mic?.setRange(kbRange.low, kbRange.high); // listen across the wider range either way
   $('rangeLabel').textContent = `${midiToName(settings.low)}–${midiToName(settings.high)}`;
   state = {
     notes,
@@ -82,6 +86,12 @@ function startExercise(notes, customName = null) {
   keyboard.mark(null, 'hint');
   setFeedback(mic || midiNames.length ? 'Play the highlighted note.' : 'Press “Start listening”, then play the highlighted note.');
   render();
+}
+
+function showKeyboard() {
+  const shown = phoneQuery.matches ? keyboardRange(practiceSpan, { exact: true }) : kbRange;
+  keyboard.setRange(shown.low, shown.high);
+  keyboard.reveal(Math.round((Math.min(...practiceSpan) + Math.max(...practiceSpan)) / 2), false);
 }
 
 function newExercise() {
@@ -132,7 +142,10 @@ function handleNote(midi) {
     state.wrongMidi = midi;
     keyboard.flash(midi, 'wrong', 900);
     const hint = settings.hintAfter && result.mistakes >= settings.hintAfter;
-    if (hint) keyboard.mark(target.midi, 'hint');
+    if (hint) {
+      keyboard.mark(target.midi, 'hint');
+      keyboard.reveal(target.midi);
+    }
     setFeedback(`✗ You played ${midiToName(midi)} — try again${hint ? ' (the right key is outlined below)' : ''}`, 'bad');
     render();
   }
@@ -287,6 +300,13 @@ new ResizeObserver(() => {
     render();
   }
 }).observe(els.sheet);
+
+phoneQuery.addEventListener('change', () => {
+  showKeyboard();
+  const target = state.notes[state.index];
+  const hint = settings.hintAfter && target && state.results[state.index].mistakes >= settings.hintAfter;
+  if (hint) keyboard.mark(target.midi, 'hint');
+});
 
 fillSettingsForm();
 updateGateMarker();

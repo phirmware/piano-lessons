@@ -92,11 +92,11 @@ export function notePool({ low = LOWEST_MIDI, high = HIGHEST_MIDI, clef = 'both'
   return pool;
 }
 
-// Keyboard range to display: the given notes plus the default C2–C7, widened
-// to white keys at both ends.
-export function keyboardRange(midis) {
-  let low = Math.min(LOWEST_MIDI, ...midis);
-  let high = Math.max(HIGHEST_MIDI, ...midis);
+// Keyboard range to display: the given notes plus (unless `exact`) the default
+// C2–C7, widened to white keys at both ends.
+export function keyboardRange(midis, { exact = false } = {}) {
+  let low = exact ? Math.min(...midis) : Math.min(LOWEST_MIDI, ...midis);
+  let high = exact ? Math.max(...midis) : Math.max(HIGHEST_MIDI, ...midis);
   if (isBlackKey(low)) low--;
   if (isBlackKey(high)) high++;
   return { low, high };

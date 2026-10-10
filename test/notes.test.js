@@ -45,3 +45,8 @@ test('keyboard range keeps C2–C7 and widens to white keys', () => {
   assert.deepEqual(keyboardRange([60, 62]), { low: 36, high: 96 });
   assert.deepEqual(keyboardRange([22, 106]), { low: 21, high: 107 });
 });
+
+test('exact keyboard range shows only the practised notes', () => {
+  assert.deepEqual(keyboardRange([60, 79], { exact: true }), { low: 60, high: 79 });
+  assert.deepEqual(keyboardRange([61, 70, 66], { exact: true }), { low: 60, high: 71 });
+});

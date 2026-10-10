@@ -45,7 +45,7 @@ export function initLibrary({ start, preview }) {
   let exercises = loadExercises();
   let editingId = null;
 
-  buildKeyboard($('customKeyboard'), (midi) => {
+  const miniKeyboard = buildKeyboard($('customKeyboard'), (midi) => {
     preview(midi);
     const sep = notesInput.value && !/\s$/.test(notesInput.value) ? ' ' : '';
     notesInput.value += sep + midiToName(midi).replace('♯', '#');
@@ -97,6 +97,7 @@ export function initLibrary({ start, preview }) {
     listView.hidden = true;
     editor.hidden = false;
     updatePreview();
+    miniKeyboard.reveal(60, false); // middle C, when the keys don't all fit
     nameInput.focus();
   }
 

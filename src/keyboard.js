@@ -22,15 +22,51 @@ export function buildKeyboard(container, onPress, { low = LOWEST_MIDI, high = HI
       const w = whiteW * 0.62;
       html += `<button class="key black" data-midi="${m}" style="left:${(leftWhite + 1) * whiteW - w / 2}%;width:${w}%" aria-label="${midiToName(m)}"></button>`;
     }
-    container.innerHTML = html;
+    // Inner strip: fills the container on desktop, wider than it (scrollable)
+    // on phones where keys get a minimum tappable width.
+    container.innerHTML = `<div class="keys" style="--whites:${whites.length}">${html}</div>`;
     container.setAttribute('aria-label', `Piano keyboard ${midiToName(lo)} to ${midiToName(hi)}`);
+    updateFit();
   }
 
+  // When every white key can be at least FIT_MIN_KEY px wide, the keys fill the
+  // container instead of scrolling (used by the phone layout).
+  const FIT_MIN_KEY = 32;
+  function updateFit() {
+    const whites = container.querySelectorAll('.key.white').length;
+    container.classList.toggle('fits', whites > 0 && container.clientWidth / whites >= FIT_MIN_KEY);
+  }
+  new ResizeObserver(updateFit).observe(container);
+
   draw(low, high);
+  // Mouse presses play immediately. Touch/pen presses play on release, and only
+  // if the finger didn't move, so swiping to scroll the keys never plays a note.
+  let touch = null;
+  const endTouch = () => {
+    touch?.key.classList.remove('pressed');
+    touch = null;
+  };
   container.addEventListener('pointerdown', (e) => {
     const key = e.target.closest('.key');
-    if (key) onPress(Number(key.dataset.midi));
+    if (!key) return;
+    if (e.pointerType !== 'touch' && e.pointerType !== 'pen') {
+      onPress(Number(key.dataset.midi));
+      return;
+    }
+    endTouch();
+    touch = { id: e.pointerId, x: e.clientX, y: e.clientY, scroll: container.scrollLeft, key };
+    key.classList.add('pressed');
   });
+  container.addEventListener('pointermove', (e) => {
+    if (touch?.id === e.pointerId && Math.hypot(e.clientX - touch.x, e.clientY - touch.y) > 10) endTouch();
+  });
+  container.addEventListener('pointerup', (e) => {
+    if (touch?.id !== e.pointerId) return;
+    const { key, scroll } = touch;
+    endTouch();
+    if (Math.abs(container.scrollLeft - scroll) < 2) onPress(Number(key.dataset.midi));
+  });
+  container.addEventListener('pointercancel', endTouch);
 
   const keyEl = (m) => container.querySelector(`[data-midi="${m}"]`);
   const flashTimers = new Map();
@@ -47,6 +83,13 @@ export function buildKeyboard(container, onPress, { low = LOWEST_MIDI, high = HI
     mark(midi, cls) {
       container.querySelectorAll(`.${cls}`).forEach((el) => el.classList.remove(cls));
       if (midi !== null) keyEl(midi)?.classList.add(cls);
+    },
+    // Scroll a key to the middle when the keys don't all fit (phones).
+    reveal(midi, smooth = true) {
+      const el = keyEl(midi);
+      if (!el || container.scrollWidth <= container.clientWidth) return;
+      const left = el.offsetLeft + el.offsetWidth / 2 - container.clientWidth / 2;
+      container.scrollTo({ left, behavior: smooth ? 'smooth' : 'auto' });
     },
     // Redraw with a different range (no-op if unchanged).
     setRange(lo, hi) {
